@@ -4,6 +4,7 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -24,6 +25,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
     val TAG = "TAG_MainActivity"//로그를 분류할 태그입니다.
@@ -87,6 +89,21 @@ class MainActivity : AppCompatActivity() {
             val body = MultipartBody.Part.createFormData("proFile", file.name, requestFile)
 
             Log.d(TAG,file.name)
+
+            var exif : ExifInterface? = null
+            try{
+                exif = ExifInterface(file.absolutePath)}
+            catch (e : IOException){
+                e.printStackTrace()}
+            val filename = file.name
+            val dateTime = exif?.getAttribute(ExifInterface.TAG_DATETIME)
+            val latitude = exif?.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
+            val longitude = exif?.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
+
+            Log.d("ExifData", "File Name : $filename")
+            Log.d("ExifData", "dateTime : $dateTime")
+            Log.d("ExifData", "latitude : $latitude")
+            Log.d("ExifData", "longitude : $longitude")
 
             sendImage(body)
         }
