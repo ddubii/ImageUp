@@ -1,13 +1,21 @@
 package com.hb.imageup
 
+import android.content.Intent
+import android.widget.EditText
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 
-object RetrofitSetting {
-    val API_BASE_URL = "http://192.168.219.103:8080/"
+object RetrofitSetting{
+
+    //내꺼
+    //val API_BASE_URL = "http://172.20.6.244:8080/"
+
+    //유라언니
+    val API_BASE_URL = "http://172.20.16.60:8080/"
+
     val httpClient = OkHttpClient.Builder()
 
     val baseBuilder = Retrofit.Builder()

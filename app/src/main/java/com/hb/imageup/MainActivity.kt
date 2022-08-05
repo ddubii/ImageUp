@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,30 +26,32 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import kotlinx.android.synthetic.main.activity_main.*
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
     val TAG = "TAG_MainActivity"//로그를 분류할 태그입니다.
     lateinit var mCallTodoList : retrofit2.Call<JsonObject>
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-//         val sendBtn = findViewById<Button>(R.id.sendImage)
-//         val getBtn = findViewById<Button>(R.id.button1)
 
         sendBtn.setOnClickListener{
             getProfileImage()
         }
 
         getBtn.setOnClickListener {
-            getBtn.visibility = View.INVISIBLE
+//          getBtn.visibility = View.INVISIBLE
             callTodoList()
-
         }
+
     }
+
 
     private fun callTodoList() {
         mCallTodoList = RetrofitSetting.createBaseService(RetrofitPath::class.java).getTodoList() // RetrofitAPI에서 Json객체 요청을 반환하는 메서드를 불러옵니다.
@@ -86,26 +89,37 @@ class MainActivity : AppCompatActivity() {
 
             val file = File(absolutelyPath(imagePath, this))
             val requestFile = RequestBody.create(MediaType.parse("image/*"), file)
-            val body = MultipartBody.Part.createFormData("proFile", file.name, requestFile)
 
-            Log.d(TAG,file.name)
 
             var exif : ExifInterface? = null
-            try{
-                exif = ExifInterface(file.absolutePath)}
-            catch (e : IOException){
-                e.printStackTrace()}
+            try{exif = ExifInterface(file.absolutePath)}
+            catch (e : IOException){e.printStackTrace()}
+
             val filename = file.name
-            val dateTime = exif?.getAttribute(ExifInterface.TAG_DATETIME)
-            val latitude = exif?.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
-            val longitude = exif?.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
+            var dateTime = exif?.getAttribute(ExifInterface.TAG_DATETIME)
+            var latitude = exif?.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
+            var longitude = exif?.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
+
+            if(dateTime==null){dateTime = "null"};if(latitude==null){latitude = "null"};if(longitude==null){longitude = "null"}
+
+            val requestname = RequestBody.create(MediaType.parse("text/plain"), filename)
+            val requestdateTime = RequestBody.create(MediaType.parse("text/plain"), dateTime)
+            val requestlatitude = RequestBody.create(MediaType.parse("text/plain"), latitude)
+            val requestlongitude = RequestBody.create(MediaType.parse("text/plain"), longitude)
+
+            val body= MultipartBody.Part.createFormData("proFile", file.name, requestFile)
+            val textHashMap = hashMapOf<String, RequestBody>()
+            textHashMap["fName"] = requestname
+            textHashMap["fDate"] = requestdateTime
+            textHashMap["fLati"] = requestlatitude
+            textHashMap["fLongi"] = requestlongitude
 
             Log.d("ExifData", "File Name : $filename")
             Log.d("ExifData", "dateTime : $dateTime")
             Log.d("ExifData", "latitude : $latitude")
             Log.d("ExifData", "longitude : $longitude")
 
-            sendImage(body)
+            sendImage(body,textHashMap)
         }
     }
     fun getProfileImage(){
@@ -129,9 +143,9 @@ class MainActivity : AppCompatActivity() {
         return result!!
     }
 
-    fun sendImage(image : MultipartBody.Part) {
+    fun sendImage(image : MultipartBody.Part, data : HashMap<String, RequestBody>) {
         val service = RetrofitSetting.createBaseService(RetrofitPath::class.java) //레트로핏 통신 설정
-        val call = service.profileSend(image)!! //통신 API 패스 설정
+        val call = service.profileSend(image, data)!! //통신 API 패스 설정
 
         call.enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
@@ -151,3 +165,5 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+
